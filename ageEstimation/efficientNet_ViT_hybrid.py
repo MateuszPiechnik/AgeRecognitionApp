@@ -111,14 +111,13 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, nu
 val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 print("DataLoaders created.")
 
-class EfficientNetViTHybrid(nn.Module): # Zmieniona nazwa klasy
+class EfficientNetViTHybrid(nn.Module): 
     def __init__(self, efficientnet_model_name, vit_model_name, num_reg_outputs=1, pretrained=True, dropout_rate=0.2):
         super().__init__()
-        # Załaduj EfficientNet jako ekstraktor cech
+
         self.efficientnet_backbone = timm.create_model(efficientnet_model_name, pretrained=pretrained, num_classes=0)
         num_efficientnet_features = self.efficientnet_backbone.num_features
 
-        # Załaduj ViT jako ekstraktor cech
         self.vit_backbone = timm.create_model(vit_model_name, pretrained=pretrained, num_classes=0)
         num_vit_features = self.vit_backbone.num_features
 
@@ -143,7 +142,7 @@ class EfficientNetViTHybrid(nn.Module): # Zmieniona nazwa klasy
         output = self.regressor(x)
         return output
     
-model = EfficientNetViTHybrid(EFFICIENTNET_MODEL_NAME, VIT_MODEL_NAME) # Użycie nowej nazwy klasy
+model = EfficientNetViTHybrid(EFFICIENTNET_MODEL_NAME, VIT_MODEL_NAME) 
 model = model.to(DEVICE)
 
 criterion = nn.L1Loss()
@@ -224,24 +223,9 @@ def plot_history(history):
     epochs = list(range(1, num_epochs + 1))
     ticks = list(range(1, num_epochs + 1, 2))
     if epochs[-1] not in ticks:
-        ticks.append(epochs[-1])  # dodaj ostatnią epokę, jeśli jej nie ma
+        ticks.append(epochs[-1])  
 
-    # Wykres strat MAE (Loss)
-    plt.figure(figsize=(8, 5))
-    plt.plot(epochs, history['train_loss'], label='Błąd treningowy (L1Loss)')
-    plt.plot(epochs, history['val_loss'], label='Błąd walidacyjny (L1Loss)')
-    plt.title('Strata ucząca i walidacyjna (MAE Loss)')
-    plt.xlabel('Epoka')
-    plt.ylabel('Błąd')
-    plt.xticks(ticks)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig('/kaggle/working/strata_uczaca_walidacyjna.png')
-    print("Zapisano wykres: strata_uczaca_walidacyjna.png")
-    plt.close()
-
-    # Wykres MAE jako metryka
+    # Wykres MAE 
     plt.figure(figsize=(8, 5))
     plt.plot(epochs, history['train_mae'], label='MAE treningowy')
     plt.plot(epochs, history['val_mae'], label='MAE walidacyjny')

@@ -9,16 +9,14 @@ try:
 except ImportError:
     resize_interpolation = transforms.InterpolationMode.BICUBIC
 
-import timm # Biblioteka z modelami
+import timm 
 from PIL import Image
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm.notebook import tqdm # Lub from tqdm import tqdm
+from tqdm.notebook import tqdm 
 import time
-import copy
-import math
 
 TRAIN_DIR = '/kaggle/input/train-images/train'
 VAL_DIR = '/kaggle/input/val-images/val'
@@ -113,35 +111,30 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_w
 
 # --- Definicja Modelu Hybrydowego ---
 class ResNetViTHybrid(nn.Module):
-    def __init__(self, resnet_model_name, vit_model_name, num_reg_outputs=1, pretrained=True, dropout_rate=0.2): # Zgodnie z rysunkiem z artykułu Naznin
+    def __init__(self, resnet_model_name, vit_model_name, num_reg_outputs=1, pretrained=True, dropout_rate=0.2): # Zgodnie z rysunkiem z artykułu
         super().__init__()
-        self.resnet_backbone = timm.create_model(resnet_model_name, pretrained=pretrained, num_classes=0) # num_classes=0 usuwa głowę
+        self.resnet_backbone = timm.create_model(resnet_model_name, pretrained=pretrained, num_classes=0) 
         num_resnet_features = self.resnet_backbone.num_features
 
         self.vit_backbone = timm.create_model(vit_model_name, pretrained=pretrained, num_classes=0)
         num_vit_features = self.vit_backbone.num_features 
 
-        # Warstwy do fuzji i regresji - inspirowane Fig. 1 z art. Naznin & Islam
-        # Oni użyli Dense(2048) -> Dropout -> Dense(1024) -> Dropout -> Dense(1)
         self.fusion_fc1 = nn.Linear(num_resnet_features + num_vit_features, 2048)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout_rate)
         self.fusion_fc2 = nn.Linear(2048, 1024)
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout_rate)
-        self.regressor = nn.Linear(1024, num_reg_outputs) # Dla regresji wieku
+        self.regressor = nn.Linear(1024, num_reg_outputs) 
 
     def forward(self, x):
-        # Cechy z ResNet
-        features_resnet = self.resnet_backbone(x) # Wyjście ResNet po usunięciu głowy to już wektor cech
+        features_resnet = self.resnet_backbone(x) 
 
-        # Cechy z ViT
-        features_vit = self.vit_backbone(x) # Wyjście ViT po usunięciu głowy to już wektor cech
+        features_vit = self.vit_backbone(x) 
 
         # Konkatenacja cech
         combined_features = torch.cat((features_resnet, features_vit), dim=1)
 
-        # Przejście przez warstwy gęste
         x = self.fusion_fc1(combined_features)
         x = self.relu1(x)
         x = self.dropout1(x)
@@ -155,7 +148,7 @@ print(f"\nCreating Hybrid model: {RESNET_MODEL_NAME} + {VIT_MODEL_NAME}")
 model = ResNetViTHybrid(RESNET_MODEL_NAME, VIT_MODEL_NAME)
 model = model.to(DEVICE)
 
-criterion = nn.L1Loss() # MAE Loss
+criterion = nn.L1Loss() 
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 def train_model(model, criterion, optimizer, num_epochs=25):
@@ -233,24 +226,9 @@ def plot_history(history):
     epochs = list(range(1, num_epochs + 1))
     ticks = list(range(1, num_epochs + 1, 2))
     if epochs[-1] not in ticks:
-        ticks.append(epochs[-1])  # dodaj ostatnią epokę, jeśli jej nie ma
+        ticks.append(epochs[-1])  
 
-    # Wykres strat MAE (Loss)
-    plt.figure(figsize=(8, 5))
-    plt.plot(epochs, history['train_loss'], label='Błąd treningowy (L1Loss)')
-    plt.plot(epochs, history['val_loss'], label='Błąd walidacyjny (L1Loss)')
-    plt.title('Strata ucząca i walidacyjna (MAE Loss)')
-    plt.xlabel('Epoka')
-    plt.ylabel('Błąd')
-    plt.xticks(ticks)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig('/kaggle/working/strata_uczaca_walidacyjna.png')
-    print("Zapisano wykres: strata_uczaca_walidacyjna.png")
-    plt.close()
-
-    # Wykres MAE jako metryka
+    # Wykres MAE 
     plt.figure(figsize=(8, 5))
     plt.plot(epochs, history['train_mae'], label='MAE treningowy')
     plt.plot(epochs, history['val_mae'], label='MAE walidacyjny')

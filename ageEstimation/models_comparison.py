@@ -92,14 +92,12 @@ test_transforms = transforms.Compose([
     normalize,
 ])
 
-class EfficientNetViTHybrid(nn.Module): # Zmieniona nazwa klasy
+class EfficientNetViTHybrid(nn.Module):
     def __init__(self, efficientnet_model_name, vit_model_name, num_reg_outputs=1, pretrained_weights=True, dropout_rate=0.2):
         super().__init__()
-        # Załaduj EfficientNet jako ekstraktor cech
         self.efficientnet_backbone = timm.create_model(efficientnet_model_name, pretrained=pretrained_weights, num_classes=0)
         num_efficientnet_features = self.efficientnet_backbone.num_features
 
-        # Załaduj ViT jako ekstraktor cech
         self.vit_backbone = timm.create_model(vit_model_name, pretrained=pretrained_weights, num_classes=0)
         num_vit_features = self.vit_backbone.num_features
 
@@ -125,7 +123,7 @@ class EfficientNetViTHybrid(nn.Module): # Zmieniona nazwa klasy
         return output
     
 class ResNetViTHybrid(nn.Module):
-    def __init__(self, resnet_model_name, vit_model_name, num_reg_outputs=1, pretrained=True, dropout_rate=0.2): # Zgodnie z rysunkiem z artykułu Naznin
+    def __init__(self, resnet_model_name, vit_model_name, num_reg_outputs=1, pretrained=True, dropout_rate=0.2): 
         super().__init__()
         self.resnet_backbone = timm.create_model(resnet_model_name, pretrained=pretrained, num_classes=0) # num_classes=0 usuwa głowę
         num_resnet_features = self.resnet_backbone.num_features
@@ -133,8 +131,7 @@ class ResNetViTHybrid(nn.Module):
         self.vit_backbone = timm.create_model(vit_model_name, pretrained=pretrained, num_classes=0)
         num_vit_features = self.vit_backbone.num_features 
 
-        # Warstwy do fuzji i regresji - inspirowane Fig. 1 z art. Naznin & Islam
-        # Oni użyli Dense(2048) -> Dropout -> Dense(1024) -> Dropout -> Dense(1)
+        # na podstawie rysunku z artykulu Naznin & Islam
         self.fusion_fc1 = nn.Linear(num_resnet_features + num_vit_features, 2048)
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout_rate)
@@ -144,16 +141,13 @@ class ResNetViTHybrid(nn.Module):
         self.regressor = nn.Linear(1024, num_reg_outputs) # Dla regresji wieku
 
     def forward(self, x):
-        # Cechy z ResNet
-        features_resnet = self.resnet_backbone(x) # Wyjście ResNet po usunięciu głowy to już wektor cech
+        features_resnet = self.resnet_backbone(x) 
 
-        # Cechy z ViT
-        features_vit = self.vit_backbone(x) # Wyjście ViT po usunięciu głowy to już wektor cech
+        features_vit = self.vit_backbone(x) 
 
         # Konkatenacja cech
         combined_features = torch.cat((features_resnet, features_vit), dim=1)
 
-        # Przejście przez warstwy gęste
         x = self.fusion_fc1(combined_features)
         x = self.relu1(x)
         x = self.dropout1(x)
@@ -200,7 +194,6 @@ for model_key, model_path in MODEL_PATHS_TO_EVALUATE.items():
             results_data.append({'Model': model_key, 'MAE': float('nan'), 'Error': f"Arch not defined/timm error: {e_timm}"})
             continue
 
-    # Załaduj wagi
     if not os.path.exists(model_path):
         print(f"Error: Model weights file not found at {model_path} for {model_key}. Skipping.")
         results_data.append({'Model': model_key, 'MAE': float('nan'), 'Error': f"Weights file missing: {model_path}"})
@@ -220,7 +213,7 @@ for model_key, model_path in MODEL_PATHS_TO_EVALUATE.items():
     all_labels_list = []
     inference_times = []
 
-    with torch.no_grad(): # Wyłącz obliczanie gradientów
+    with torch.no_grad(): # Wyłączamy obliczanie gradientów
         for inputs, labels in tqdm(test_loader, desc=f"Testing {model_key}", leave=False):
             inputs = inputs.to(DEVICE)
 

@@ -7,7 +7,7 @@ sns.set(style="whitegrid")
 plt.rcParams["axes.titlesize"] = 16
 plt.rcParams["axes.labelsize"] = 13
 
-base_path = r'path'
+base_path = r'C:\Users\mateu\OneDrive\Pulpit\TI\magisterka\images_UTKFACE'
 subfolders = ['train', 'val', 'test']
 
 ages = []

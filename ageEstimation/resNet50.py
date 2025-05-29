@@ -104,13 +104,13 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_w
 
 model = timm.create_model(MODEL_NAME, pretrained=True, num_classes = 1)
 
-# Zamień ostatnią warstwę klasyfikacyjną na warstwę regresyjną (1 wyjście - wiek)
+# (1 wyjście - wiek)
 num_ftrs = model.get_classifier().in_features
 model.reset_classifier(1)
 
 model = model.to(DEVICE)
 
-criterion = nn.L1Loss() # MAE Loss
+criterion = nn.L1Loss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 def train_model(model, criterion, optimizer, num_epochs=25):
@@ -124,7 +124,6 @@ def train_model(model, criterion, optimizer, num_epochs=25):
         print(f'\nEpoch {epoch+1}/{num_epochs}')
         print('-' * 10)
 
-        # Każda epoka ma fazę treningową i walidacyjną
         for phase in ['train', 'val']:
             if phase == 'train':
                 model.train()  
@@ -202,24 +201,8 @@ def plot_history(history):
     epochs = list(range(1, num_epochs + 1))
     ticks = list(range(1, num_epochs + 1, 2))
     if epochs[-1] not in ticks:
-        ticks.append(epochs[-1])  # dodaj ostatnią epokę, jeśli jej nie ma
+        ticks.append(epochs[-1])  
 
-    # Wykres strat MAE (Loss)
-    plt.figure(figsize=(8, 5))
-    plt.plot(epochs, history['train_loss'], label='Błąd treningowy (L1Loss)')
-    plt.plot(epochs, history['val_loss'], label='Błąd walidacyjny (L1Loss)')
-    plt.title('Strata ucząca i walidacyjna (MAE Loss)')
-    plt.xlabel('Epoka')
-    plt.ylabel('Błąd')
-    plt.xticks(ticks)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig('/kaggle/working/strata_uczaca_walidacyjna.png')
-    print("Zapisano wykres: strata_uczaca_walidacyjna.png")
-    plt.close()
-
-    # Wykres MAE jako metryka
     plt.figure(figsize=(8, 5))
     plt.plot(epochs, history['train_mae'], label='MAE treningowy')
     plt.plot(epochs, history['val_mae'], label='MAE walidacyjny')

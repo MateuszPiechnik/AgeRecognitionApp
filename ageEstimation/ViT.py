@@ -9,7 +9,7 @@ try:
 except ImportError:
     resize_interpolation = transforms.InterpolationMode.BICUBIC
 
-import timm #
+import timm 
 from PIL import Image
 import os
 import pandas as pd
@@ -24,7 +24,7 @@ TRAIN_DIR = '/kaggle/input/train-images/train'
 VAL_DIR = '/kaggle/input/val-images/val'
 MODEL_SAVE_PATH = '/kaggle/working/best_vit_b16_age_model.pt' 
 
-MODEL_NAME = 'vit_base_patch16_224' # Nazwa modelu w bibliotece timm
+MODEL_NAME = 'vit_base_patch16_224' 
 IMG_SIZE = 224 
 BATCH_SIZE = 16  
 NUM_EPOCHS = 20   
@@ -84,7 +84,7 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 
 train_transforms = transforms.Compose([
-    transforms.Resize((IMG_SIZE, IMG_SIZE), interpolation=resize_interpolation), # BICUBIC dla ViT
+    transforms.Resize((IMG_SIZE, IMG_SIZE), interpolation=resize_interpolation), 
     transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(10),
     transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
@@ -111,7 +111,7 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_w
 model = timm.create_model(MODEL_NAME, pretrained=True, num_classes = 1)
 model = model.to(DEVICE)
 
-criterion = nn.L1Loss() # MAE Loss
+criterion = nn.L1Loss() 
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 def train_model(model, criterion, optimizer, num_epochs=25):
@@ -125,7 +125,6 @@ def train_model(model, criterion, optimizer, num_epochs=25):
         print(f'\nEpoch {epoch+1}/{num_epochs}')
         print('-' * 10)
 
-        # Każda epoka ma fazę treningową i walidacyjną
         for phase in ['train', 'val']:
             if phase == 'train':
                 model.train()  
@@ -203,22 +202,7 @@ def plot_history(history):
     epochs = list(range(1, num_epochs + 1))
     ticks = list(range(1, num_epochs + 1, 2))
     if epochs[-1] not in ticks:
-        ticks.append(epochs[-1])  # dodaj ostatnią epokę, jeśli jej nie ma
-
-    # Wykres strat MAE (Loss)
-    plt.figure(figsize=(8, 5))
-    plt.plot(epochs, history['train_loss'], label='Błąd treningowy (L1Loss)')
-    plt.plot(epochs, history['val_loss'], label='Błąd walidacyjny (L1Loss)')
-    plt.title('Strata ucząca i walidacyjna (MAE Loss)')
-    plt.xlabel('Epoka')
-    plt.ylabel('Błąd')
-    plt.xticks(ticks)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig('/kaggle/working/strata_uczaca_walidacyjna.png')
-    print("Zapisano wykres: strata_uczaca_walidacyjna.png")
-    plt.close()
+        ticks.append(epochs[-1]) 
 
     # Wykres MAE jako metryka
     plt.figure(figsize=(8, 5))

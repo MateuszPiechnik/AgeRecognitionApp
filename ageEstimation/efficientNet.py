@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from torchvision.transforms.functional import InterpolationMode
-import timm # Biblioteka z modelami
+import timm 
 from PIL import Image
 import os
 import pandas as pd
@@ -79,7 +79,7 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 
 train_transforms = transforms.Compose([
-    transforms.Resize((IMG_SIZE, IMG_SIZE), interpolation=InterpolationMode.BICUBIC), # Użyj BICUBIC dla EfficientNet
+    transforms.Resize((IMG_SIZE, IMG_SIZE), interpolation=InterpolationMode.BICUBIC), 
     transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(10),
     transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
@@ -106,19 +106,18 @@ print("DataLoaders created.")
 
 model = timm.create_model(MODEL_NAME, pretrained=True, num_classes = 1)
 
-# Zamień ostatnią warstwę klasyfikacyjną na warstwę regresyjną (1 wyjście - wiek)
 num_ftrs = model.get_classifier().in_features
 model.reset_classifier(1)
 
 model = model.to(DEVICE)
 
-criterion = nn.L1Loss() # MAE Loss - odpowiednik dla regresji MAE
+criterion = nn.L1Loss() 
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 def train_model(model, criterion, optimizer, num_epochs=25):
     since = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_mae = float('inf') # Chcemy minimalizować MAE
+    best_mae = float('inf') 
 
     history = {'train_loss': [], 'train_mae': [], 'val_loss': [], 'val_mae': []}
 
@@ -128,10 +127,10 @@ def train_model(model, criterion, optimizer, num_epochs=25):
 
         for phase in ['train', 'val']:
             if phase == 'train':
-                model.train()  # Ustaw model w tryb treningowy
+                model.train()  
                 dataloader = train_loader
             else:
-                model.eval()   # Ustaw model w tryb ewaluacyjny
+                model.eval()  
                 dataloader = val_loader
 
             running_loss = 0.0
@@ -144,14 +143,12 @@ def train_model(model, criterion, optimizer, num_epochs=25):
 
                 optimizer.zero_grad()
 
-                # Śledź historię tylko podczas treningu
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
                     loss = criterion(outputs, labels)
 
                     mae = torch.abs(outputs - labels).mean()
 
-                    # Backward + optymalizacja tylko w fazie treningowej
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
@@ -194,7 +191,6 @@ def train_model(model, criterion, optimizer, num_epochs=25):
 
     return model, history
 
-# --- Uruchomienie Treningu ---
 print("\nStarting training...")
 model_ft, history = train_model(model, criterion, optimizer, num_epochs=NUM_EPOCHS)
 print("Training finished.")
@@ -205,20 +201,6 @@ def plot_history(history):
     ticks = list(range(1, num_epochs + 1, 2))
     if epochs[-1] not in ticks:
         ticks.append(epochs[-1])
-
-    plt.figure(figsize=(8, 5))
-    plt.plot(epochs, history['train_loss'], label='Błąd treningowy (L1Loss)')
-    plt.plot(epochs, history['val_loss'], label='Błąd walidacyjny (L1Loss)')
-    plt.title('Strata ucząca i walidacyjna (MAE Loss)')
-    plt.xlabel('Epoka')
-    plt.ylabel('Błąd')
-    plt.xticks(ticks)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig('/kaggle/working/strata_uczaca_walidacyjna.png')
-    print("Zapisano wykres: strata_uczaca_walidacyjna.png")
-    plt.close()
 
     plt.figure(figsize=(8, 5))
     plt.plot(epochs, history['train_mae'], label='MAE treningowy')
